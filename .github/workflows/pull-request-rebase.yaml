@@ -22,17 +22,21 @@ on:
 
 jobs:
   auto-rebase:
+    if: github.event_name == 'pull_request' && github.event.action == 'labeled' && contains(github.event.label.name, 'rebase and merge')
     permissions:
       contents: read
       pull-requests: write
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
       - name: Rebase without conflicts
         run: |
           git fetch origin ${{ github.base_ref }}
           git checkout ${{ github.base_ref }}
           git pull origin ${{ github.base_ref }}
           git checkout ${{ github.head_ref }}
+          echo "update all branch, begin to rebase" 
           git rebase -i ${{ github.base_ref }} --root
           # Check for conflicts
           if git diff --name-only --diff-filter=U | grep -q .; then
