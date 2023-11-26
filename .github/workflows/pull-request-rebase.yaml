@@ -19,6 +19,9 @@ name: "pull-request-auto-rebase"
 
 on:
   pull_request_target:
+    types:
+      - synchronize
+      - closed
 
 jobs:
   auto-rebase:
@@ -29,19 +32,19 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+        with:
+          ref: ${{ github.head_ref }}
       - name: Rebase without conflicts
         run: |
+          echo ${{github.event.action}}
+          echo ${{github.event_name}}
+          echo ${{github.event.pull_request.labels.*.name}}
           git fetch origin ${{ github.base_ref }}
           git checkout ${{ github.base_ref }}
           git pull origin ${{ github.base_ref }}
           git checkout ${{ github.head_ref }}
-          echo "update all branch, begin to rebase" 
+          echo "updated branch, begin to rebase" 
           git rebase -i ${{ github.base_ref }} --root
-          # Check for conflicts
-          if git diff --name-only --diff-filter=U | grep -q .; then
-            echo "Conflict detected. Resolve conflicts manually."
-            exit 1
-          fi
 
       - name: Force push the rebased branch
         run: |
