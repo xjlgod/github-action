@@ -17,6 +17,7 @@
 
 name: "pull-request-auto-rebase"
 
+
 on:
   pull_request_target:
 
@@ -27,13 +28,20 @@ jobs:
       pull-requests: write
     runs-on: ubuntu-latest
     steps:
-      - name: "Checkout ${{ github.ref }}"
-        if: github.event.action == 'labeled' && github.event.label.name == 'rebase'
-        run: |        # Get the target branch name
-          target_branch=$(echo $GITHUB_REF | sed 's/.*refs\/heads\///')
+      - name: Rebase without conflicts
+        run: |
+          git fetch origin ${{ github.base_ref }}
+          git checkout ${{ github.base_ref }}
+          git pull origin ${{ github.base_ref }}
+          git checkout ${{ github.head_ref }}
+          git rebase -i ${{ github.base_ref }} --root
+          # Check for conflicts
+          if git diff --name-only --diff-filter=U | grep -q .; then
+            echo "Conflict detected. Resolve conflicts manually."
+            exit 1
+          fi
+
+      - name: Force push the rebased branch
+        run: |
+          git push origin ${{ github.head_ref }} --force
           
-          # Rebase the branch with the main branch
-          git rebase main
-          
-          # Push the changes to the branch
-          git push --force-with-lease
