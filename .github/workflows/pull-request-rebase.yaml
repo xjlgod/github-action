@@ -22,7 +22,6 @@ on:
 
 jobs:
   auto-rebase:
-    if: github.event_name == 'pull_request' && github.event.action == 'labeled' && contains(github.event.label.name, 'rebase and merge')
     permissions:
       contents: read
       pull-requests: write
