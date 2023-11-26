@@ -17,7 +17,6 @@
 
 name: "pull-request-auto-rebase"
 
-
 on:
   pull_request_target:
 
