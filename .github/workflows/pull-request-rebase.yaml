@@ -20,6 +20,8 @@ name: "pull-request-auto-rebase"
 on:
   issue_comment:
     types: [created]
+permissions:
+  pull-requests: write
 jobs:
   rebase:
     name: Rebase
