@@ -18,30 +18,27 @@
 name: "pull-request-auto-rebase"
 
 on:
-  pull_request_target:
-    types:
-      - auto_merge_enabled
-
+  issue_comment:
+    types: [created]
 jobs:
-  auto-rebase:
-    permissions:
-      contents: read
-      pull-requests: write
+  rebase:
+    name: Rebase
     runs-on: ubuntu-latest
+    if: >-
+      github.event.issue.pull_request != '' && 
+      (
+        contains(github.event.comment.body, '/rebase') || 
+        contains(github.event.comment.body, '/autosquash')
+      )
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - name: Checkout the latest code
+        uses: actions/checkout@v3
         with:
-          ref: ${{ github.head_ref }}
-      - name: Rebase without conflicts
-        run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git fetch origin ${{ github.base_ref }}
-          git checkout ${{ github.base_ref }}
-          git pull origin ${{ github.base_ref }}
-          git checkout ${{ github.head_ref }}
-          echo "updated branch, begin to rebase" 
-          git rebase -i ${{ github.base_ref }} --root
-          git push origin ${{ github.head_ref }} --force
-          
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
+      - name: Automatic Rebase
+        uses: cirrus-actions/rebase@1.8
+        with:
+          autosquash: ${{ contains(github.event.comment.body, '/autosquash') || contains(github.event.comment.body, '/rebase-autosquash') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
